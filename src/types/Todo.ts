@@ -1,5 +1,10 @@
 export interface Todo {
     id: number;
     title: string;
-    completed?: boolean;
+    status?: Status;
+}
+
+export interface Status {
+    value: number;
+    label: string;
 }

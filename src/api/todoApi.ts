@@ -10,6 +10,7 @@ export const todoApi = async () => {
 
 export const createTodo = async (todo: Todo) => {
     const response = await axios.post(API_URL, todo);
+    console.log(response.data);
     return response;
 };
 

@@ -1,3 +1,6 @@
+import Button from "@components/atoms/button";
+import DeleteButton from "@components/atoms/button/DeleteButton";
+import UpdateButton from "@components/atoms/button/UpdateButton";
 import Title from "@components/atoms/title";
 import {
     useCreateTodoMutation,
@@ -5,6 +8,8 @@ import {
     useUpdateTodoMutation,
 } from "@hooks/mutations";
 import { useTodoQuery } from "@hooks/queries";
+import { Status } from "@types";
+import { useState } from "react";
 
 interface Todo {
     id: number;
@@ -18,62 +23,86 @@ export default function TodoList() {
     const { mutate: deleteTodo } = useDeleteTodoMutation();
     const { mutate: updateTodo } = useUpdateTodoMutation();
 
+    const [status, setStatus] = useState<Status>({ value: 1, label: "Todo" });
+    const [newTodoTitle, setNewTodoTitle] = useState("");
+
     if (isLoading) return <div>Loading...</div>;
     if (isError) return <div>Error: {error.message}</div>;
 
     return (
         <div className="flex flex-col gap-4">
             <Title title="Todo List" />
-            <button
-                onClick={() => refetch()}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md"
-            >
-                Refetch
-            </button>
+            <Button label="Refetch" onClick={() => refetch()} />
+
+            <hr />
+            <Title title="Create Todo" />
+            <hr />
+
+            <div className="flex flex-col gap-4 bg-gray-100 p-4 rounded-md">
+                <input
+                    type="text"
+                    placeholder="Todo"
+                    value={newTodoTitle}
+                    onChange={(e) => setNewTodoTitle(e.target.value)}
+                />
+                <select
+                    value={status.value}
+                    onChange={(e) =>
+                        setStatus({
+                            value: Number(e.target.value),
+                            label: e.target.options[e.target.selectedIndex]
+                                .text,
+                        })
+                    }
+                >
+                    <option value="1">Todo</option>
+                    <option value="2">In Progress</option>
+                    <option value="3">Done</option>
+                </select>
+                <Button
+                    label="Create"
+                    onClick={() => {
+                        if (newTodoTitle.trim()) {
+                            createTodo({
+                                title: newTodoTitle,
+                                id: data?.data.length + 1,
+                                status: status,
+                            });
+                            setNewTodoTitle("");
+                        }
+                    }}
+                />
+            </div>
+
             <ul className="flex flex-col gap-4">
                 {data?.data.map((todo: Todo) => (
                     <li
                         key={todo.id}
                         className="flex justify-between items-center"
                     >
-                        {todo.title}
-                        <div>
-                            <button
+                        <div className="flex flex-col gap-2">
+                            <div>{todo.title}</div>
+                            <div>{todo.completed ? "Done" : "Not Done"}</div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <UpdateButton
                                 onClick={() =>
                                     updateTodo({
                                         ...todo,
-                                        completed: !todo.completed,
+                                        status: status,
                                     })
                                 }
-                                className="bg-green-500 text-white px-4 py-2 rounded-md"
-                            >
-                                Update
-                            </button>
-                            <button
+                                label="Update"
+                            />
+                            <DeleteButton
                                 onClick={() => deleteTodo(todo.id)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-md"
-                            >
-                                Delete
-                            </button>
+                                label="Delete"
+                            />
                         </div>
                     </li>
                 ))}
             </ul>
-            <div className="flex flex-col gap-4">
-                <input type="text" placeholder="Todo" />
-                <button
-                    onClick={() =>
-                        createTodo({
-                            title: "New Todo",
-                            id: data?.data.length + 1,
-                            completed: false,
-                        })
-                    }
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                >
-                    Create
-                </button>
-            </div>
         </div>
     );
 }
